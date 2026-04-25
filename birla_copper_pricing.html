@@ -1,0 +1,618 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Birla Copper — PCB Scrap Pricing</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@300;400;500;600&display=swap" rel="stylesheet"/>
+<style>
+:root {
+  --bg: #0f1117;
+  --surface: #171b26;
+  --surface2: #1e2436;
+  --border: rgba(255,255,255,0.08);
+  --border2: rgba(255,255,255,0.14);
+  --accent: #e8593c;
+  --accent2: #f0997b;
+  --text: #e8e6e0;
+  --muted: #888;
+  --green: #3dba7e;
+  --green-bg: rgba(61,186,126,0.1);
+  --amber: #f5a623;
+  --amber-bg: rgba(245,166,35,0.1);
+  --red: #e24b4a;
+  --red-bg: rgba(226,75,74,0.1);
+  --blue: #4a9eff;
+  --font: 'IBM Plex Sans', sans-serif;
+  --mono: 'IBM Plex Mono', monospace;
+}
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { font-size: 14px; }
+body { font-family: var(--font); background: var(--bg); color: var(--text); min-height: 100vh; }
+
+/* TOPBAR */
+.topbar {
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  padding: 12px 24px;
+  display: flex; align-items: center; justify-content: space-between;
+  position: sticky; top: 0; z-index: 100;
+}
+.brand { display: flex; align-items: center; gap: 10px; }
+.brand-mark { width: 28px; height: 28px; background: var(--accent); border-radius: 4px; display: flex; align-items: center; justify-content: center; }
+.brand-mark svg { width: 16px; height: 16px; fill: white; }
+.brand-name { font-size: 13px; font-weight: 600; letter-spacing: .02em; }
+.brand-sub { font-size: 11px; color: var(--muted); margin-top: 1px; }
+.topbar-center { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; }
+.lme-chip {
+  font-family: var(--mono); font-size: 11px;
+  background: var(--surface2); border: 1px solid var(--border);
+  border-radius: 4px; padding: 4px 8px; color: var(--text);
+}
+.lme-chip span { color: var(--accent2); }
+.date-chip { font-size: 11px; color: var(--muted); padding: 4px 8px; }
+.role-chip {
+  font-size: 11px; font-weight: 500;
+  background: rgba(74,158,255,0.12); border: 1px solid rgba(74,158,255,0.25);
+  color: var(--blue); border-radius: 4px; padding: 4px 10px;
+}
+
+/* LAYOUT */
+.main { display: grid; grid-template-columns: 260px 1fr; min-height: calc(100vh - 57px); }
+.sidebar { background: var(--surface); border-right: 1px solid var(--border); padding: 20px 0; }
+.content { padding: 24px; display: flex; flex-direction: column; gap: 20px; }
+
+/* SIDEBAR */
+.sidebar-section { padding: 0 16px 16px; }
+.sidebar-label { font-size: 10px; font-weight: 600; letter-spacing: .1em; color: var(--muted); text-transform: uppercase; padding: 8px 16px; margin-bottom: 4px; }
+.board-btn {
+  display: block; width: 100%; text-align: left;
+  padding: 9px 16px; font-size: 13px; font-family: var(--font);
+  background: none; border: none; border-radius: 0;
+  color: var(--muted); cursor: pointer;
+  border-left: 2px solid transparent;
+  transition: all .15s;
+}
+.board-btn:hover { color: var(--text); background: var(--surface2); }
+.board-btn.active { color: var(--text); border-left-color: var(--accent); background: rgba(232,89,60,0.08); font-weight: 500; }
+.board-meta { font-size: 11px; color: var(--muted); margin-top: 1px; }
+
+/* DIVIDER */
+.sidebar-divider { border: none; border-top: 1px solid var(--border); margin: 8px 0; }
+
+/* PANEL HEADER */
+.panel-header { display: flex; align-items: baseline; justify-content: space-between; margin-bottom: 14px; }
+.panel-title { font-size: 12px; font-weight: 600; letter-spacing: .08em; color: var(--muted); text-transform: uppercase; }
+.panel-note { font-size: 11px; color: var(--muted); }
+
+/* METRICS STRIP */
+.metrics-strip { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; }
+.metric-card {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: 8px; padding: 14px 16px;
+}
+.metric-card.highlight { border-color: rgba(232,89,60,0.3); background: rgba(232,89,60,0.05); }
+.metric-label { font-size: 10px; font-weight: 500; letter-spacing: .06em; color: var(--muted); text-transform: uppercase; margin-bottom: 6px; }
+.metric-val { font-family: var(--mono); font-size: 22px; font-weight: 500; color: var(--text); }
+.metric-val.accent { color: var(--accent2); }
+.metric-sub { font-size: 11px; color: var(--muted); margin-top: 4px; }
+
+/* ZONE TABLE */
+.zone-card { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; overflow: hidden; }
+.zone-table { width: 100%; border-collapse: collapse; }
+.zone-table th {
+  font-size: 10px; font-weight: 600; letter-spacing: .08em; text-transform: uppercase;
+  color: var(--muted); padding: 12px 16px; text-align: left;
+  border-bottom: 1px solid var(--border); background: var(--surface2);
+}
+.zone-table td { padding: 14px 16px; border-bottom: 1px solid var(--border); vertical-align: middle; }
+.zone-table tr:last-child td { border-bottom: none; }
+.zone-table tr:hover td { background: rgba(255,255,255,0.02); }
+.zone-name-cell .zn { font-weight: 500; font-size: 14px; }
+.zone-name-cell .vendor { font-size: 11px; color: var(--muted); margin-top: 2px; }
+.price-input {
+  background: var(--surface2); border: 1px solid var(--border2);
+  border-radius: 6px; padding: 7px 10px;
+  font-family: var(--mono); font-size: 14px; color: var(--text);
+  width: 100px; outline: none; transition: border-color .2s;
+}
+.price-input:focus { border-color: var(--accent); }
+.hist-price { font-family: var(--mono); font-size: 13px; color: var(--muted); }
+.badge {
+  display: inline-flex; align-items: center; gap: 5px;
+  padding: 4px 10px; border-radius: 4px;
+  font-size: 12px; font-weight: 600; letter-spacing: .02em;
+}
+.badge.accept { background: var(--green-bg); color: var(--green); }
+.badge.conditional { background: var(--amber-bg); color: var(--amber); }
+.badge.reject { background: var(--red-bg); color: var(--red); }
+.best-tag {
+  font-size: 10px; font-weight: 600; letter-spacing: .06em;
+  background: rgba(232,89,60,0.15); color: var(--accent2);
+  border-radius: 3px; padding: 2px 6px; margin-left: 6px;
+}
+.counter-hint { font-size: 11px; color: var(--muted); margin-top: 3px; font-family: var(--mono); }
+.margin-val { font-family: var(--mono); font-size: 14px; font-weight: 500; }
+.margin-val.pos { color: var(--green); }
+.margin-val.neg { color: var(--red); }
+
+/* BOTTOM GRID */
+.bottom-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+.info-card { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 16px; }
+.info-row { display: flex; justify-content: space-between; align-items: center; padding: 5px 0; font-size: 12px; border-bottom: 1px solid var(--border); }
+.info-row:last-child { border-bottom: none; }
+.info-key { color: var(--muted); }
+.info-val { font-family: var(--mono); font-weight: 500; color: var(--text); }
+.stale-tag { font-size: 10px; font-weight: 600; background: var(--amber-bg); color: var(--amber); border-radius: 3px; padding: 1px 5px; margin-left: 5px; }
+
+/* CONTENT SCENARIOS */
+.scenarios-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 10px; margin-top: 14px; }
+.scenario-card { background: var(--surface2); border: 1px solid var(--border); border-radius: 6px; padding: 12px; }
+.scenario-label { font-size: 10px; font-weight: 600; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); margin-bottom: 8px; }
+.scenario-row { display: flex; justify-content: space-between; font-size: 11px; padding: 2px 0; }
+.scenario-row .k { color: var(--muted); }
+.scenario-row .v { font-family: var(--mono); color: var(--text); }
+.scenario-card.avg-card { border-color: rgba(232,89,60,0.25); }
+
+/* LME EDIT */
+.lme-edit-card { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 16px; }
+.lme-grid { display: grid; grid-template-columns: repeat(5,1fr); gap: 10px; margin-top: 12px; }
+.lme-field label { font-size: 10px; font-weight: 600; letter-spacing: .07em; text-transform: uppercase; color: var(--muted); display: block; margin-bottom: 5px; }
+.lme-field input {
+  width: 100%; background: var(--surface2); border: 1px solid var(--border2);
+  border-radius: 5px; padding: 6px 8px;
+  font-family: var(--mono); font-size: 12px; color: var(--text); outline: none;
+}
+.lme-field input:focus { border-color: var(--accent); }
+.update-btn {
+  margin-top: 12px; padding: 8px 20px;
+  background: var(--accent); color: white; border: none;
+  border-radius: 6px; font-family: var(--font); font-size: 13px; font-weight: 500;
+  cursor: pointer; transition: background .2s;
+}
+.update-btn:hover { background: #d04a2e; }
+
+/* AUDIT STRIP */
+.audit-strip { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 14px 16px; }
+.audit-row { display: flex; gap: 16px; font-size: 11px; color: var(--muted); padding: 4px 0; border-bottom: 1px solid var(--border); font-family: var(--mono); }
+.audit-row:last-child { border-bottom: none; }
+.audit-row .ts { color: var(--muted); width: 140px; flex-shrink: 0; }
+.audit-row .action { color: var(--text); flex: 1; }
+.audit-row .usr { color: var(--blue); width: 100px; text-align: right; }
+
+/* STALENESS WARNING */
+.stale-banner {
+  background: var(--amber-bg); border: 1px solid rgba(245,166,35,0.25);
+  border-radius: 6px; padding: 8px 14px;
+  font-size: 12px; color: var(--amber);
+  display: none;
+}
+.stale-banner.show { display: block; }
+
+/* scrollbar */
+::-webkit-scrollbar { width: 5px; }
+::-webkit-scrollbar-track { background: var(--bg); }
+::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 3px; }
+</style>
+</head>
+<body>
+
+<!-- TOPBAR -->
+<div class="topbar">
+  <div class="brand">
+    <div class="brand-mark">
+      <svg viewBox="0 0 16 16"><path d="M8 2L14 6V10L8 14L2 10V6L8 2Z"/></svg>
+    </div>
+    <div>
+      <div class="brand-name">Birla Copper</div>
+      <div class="brand-sub">PCB Scrap Pricing System</div>
+    </div>
+  </div>
+  <div class="topbar-center" id="lme-strip">
+    <div class="lme-chip">Cu <span id="disp-cu">$9,847</span>/MT</div>
+    <div class="lme-chip">Au <span id="disp-au">$3,241</span>/toz</div>
+    <div class="lme-chip">Ag <span id="disp-ag">$32.4</span>/toz</div>
+    <div class="lme-chip">Pt <span id="disp-pt">$980</span>/toz</div>
+    <div class="lme-chip">Pd <span id="disp-pd">$1,050</span>/toz</div>
+    <div class="lme-chip">RBI <span id="disp-rbi">₹83.42</span>/$</div>
+    <div class="date-chip" id="disp-date"></div>
+  </div>
+  <div class="role-chip">Pricing team</div>
+</div>
+
+<!-- MAIN LAYOUT -->
+<div class="main">
+
+  <!-- SIDEBAR -->
+  <div class="sidebar">
+    <div class="sidebar-label">Board category</div>
+    <div id="board-list"></div>
+    <hr class="sidebar-divider" style="margin:12px 0"/>
+    <div class="sidebar-label">Assumptions</div>
+    <div class="sidebar-section" style="font-size:11px;color:var(--muted);line-height:1.8">
+      <div style="display:flex;justify-content:space-between"><span>Recovery — Cu</span><span style="font-family:var(--mono);color:var(--text)">98.9%</span></div>
+      <div style="display:flex;justify-content:space-between"><span>Recovery — Au</span><span style="font-family:var(--mono);color:var(--text)">98.9%</span></div>
+      <div style="display:flex;justify-content:space-between"><span>Recovery — Ag</span><span style="font-family:var(--mono);color:var(--text)">93.4%</span></div>
+      <div style="display:flex;justify-content:space-between"><span>Recovery — Pt/Pd</span><span style="font-family:var(--mono);color:var(--text)">85.0%</span></div>
+      <div style="display:flex;justify-content:space-between;margin-top:6px"><span>RC — Cu</span><span style="font-family:var(--mono);color:var(--text)">$0.33/kg</span></div>
+      <div style="display:flex;justify-content:space-between"><span>RC — Au</span><span style="font-family:var(--mono);color:var(--text)">$0.125/gm</span></div>
+      <div style="display:flex;justify-content:space-between;margin-top:6px"><span>Op. cost</span><span style="font-family:var(--mono);color:var(--text)">$65/MT</span></div>
+      <div style="display:flex;justify-content:space-between"><span>WC days</span><span style="font-family:var(--mono);color:var(--text)">60 days · 8%</span></div>
+      <div style="display:flex;justify-content:space-between"><span>Commission</span><span style="font-family:var(--mono);color:var(--text)">4%</span></div>
+    </div>
+  </div>
+
+  <!-- CONTENT -->
+  <div class="content">
+
+    <!-- LME UPDATE ROW -->
+    <div class="lme-edit-card">
+      <div class="panel-header">
+        <span class="panel-title">Update today's LME &amp; forex</span>
+        <span class="panel-note">Enter values from your daily email / Ekaayan</span>
+      </div>
+      <div class="lme-grid">
+        <div class="lme-field"><label>Cu ($/MT)</label><input type="number" id="inp-cu" value="9847" step="1"/></div>
+        <div class="lme-field"><label>Au ($/toz)</label><input type="number" id="inp-au" value="3241" step="0.1"/></div>
+        <div class="lme-field"><label>Ag ($/toz)</label><input type="number" id="inp-ag" value="32.4" step="0.01"/></div>
+        <div class="lme-field"><label>Pt ($/toz)</label><input type="number" id="inp-pt" value="980" step="1"/></div>
+        <div class="lme-field"><label>Pd ($/toz)</label><input type="number" id="inp-pd" value="1050" step="1"/></div>
+        <div class="lme-field"><label>RBI (₹/$)</label><input type="number" id="inp-rbi" value="83.42" step="0.01"/></div>
+        <div class="lme-field"><label>TC ($/t, 0 ppm Au)</label><input type="number" id="inp-tc" value="330" step="1"/></div>
+        <div class="lme-field"><label>Date</label><input type="date" id="inp-date"/></div>
+      </div>
+      <button class="update-btn" onclick="updateLME()">Update prices &amp; recalculate</button>
+    </div>
+
+    <!-- METRICS STRIP -->
+    <div>
+      <div class="panel-header"><span class="panel-title">Content based price — <span id="board-name-display">Router board</span></span></div>
+      <div class="metrics-strip">
+        <div class="metric-card highlight">
+          <div class="metric-label">Content based price</div>
+          <div class="metric-val accent" id="m-cbp">₹448/kg</div>
+          <div class="metric-sub">avg scenario · landed · incl. commission</div>
+        </div>
+        <div class="metric-card">
+          <div class="metric-label">Cu content (avg)</div>
+          <div class="metric-val" id="m-cu">18.4%</div>
+          <div class="metric-sub" id="m-metals">Au 142 ppm · Ag 1,840 ppm</div>
+        </div>
+        <div class="metric-card">
+          <div class="metric-label">Target EBITDA</div>
+          <div class="metric-val" id="m-ebitda">15%</div>
+          <div class="metric-sub" id="m-opex">Op. cost $65/MT · WC 60d</div>
+        </div>
+        <div class="metric-card">
+          <div class="metric-label">Market intel (binding floor)</div>
+          <div class="metric-val" id="m-mkt">₹362/kg</div>
+          <div class="metric-sub" id="m-mkt-age">North zone · 3 days ago</div>
+        </div>
+      </div>
+
+      <!-- SCENARIOS -->
+      <div class="scenarios-grid">
+        <div class="scenario-card">
+          <div class="scenario-label">Low scenario (35th %ile)</div>
+          <div class="scenario-row"><span class="k">Cu</span><span class="v" id="sc-lo-cu">—</span></div>
+          <div class="scenario-row"><span class="k">Au</span><span class="v" id="sc-lo-au">—</span></div>
+          <div class="scenario-row"><span class="k">Content based price</span><span class="v" id="sc-lo-cbp">—</span></div>
+        </div>
+        <div class="scenario-card avg-card">
+          <div class="scenario-label">Avg scenario (decision basis)</div>
+          <div class="scenario-row"><span class="k">Cu</span><span class="v" id="sc-av-cu">—</span></div>
+          <div class="scenario-row"><span class="k">Au</span><span class="v" id="sc-av-au">—</span></div>
+          <div class="scenario-row"><span class="k">Content based price</span><span class="v" id="sc-av-cbp">—</span></div>
+        </div>
+        <div class="scenario-card">
+          <div class="scenario-label">High scenario (40th %ile)</div>
+          <div class="scenario-row"><span class="k">Cu</span><span class="v" id="sc-hi-cu">—</span></div>
+          <div class="scenario-row"><span class="k">Au</span><span class="v" id="sc-hi-au">—</span></div>
+          <div class="scenario-row"><span class="k">Content based price</span><span class="v" id="sc-hi-cbp">—</span></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ZONE TABLE -->
+    <div>
+      <div class="panel-header">
+        <span class="panel-title">Zone vendor quotes</span>
+        <span class="panel-note">Edit the quoted price — decision fires automatically</span>
+      </div>
+      <div class="stale-banner" id="stale-banner">Market intelligence data for one or more zones is older than 7 days. Consider updating before making sourcing decisions.</div>
+      <div class="zone-card" style="margin-top:8px">
+        <table class="zone-table">
+          <thead>
+            <tr>
+              <th>Zone / Vendor</th>
+              <th>Vendor quoted (₹/kg)</th>
+              <th>Hist. zone price (normalised)</th>
+              <th>Market intel</th>
+              <th>Decision</th>
+              <th>Margin %</th>
+            </tr>
+          </thead>
+          <tbody id="zone-tbody"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- BOTTOM GRID -->
+    <div class="bottom-grid">
+      <div>
+        <div class="panel-header"><span class="panel-title">Market intelligence</span><button style="font-size:11px;padding:3px 10px;border:1px solid var(--border2);background:none;color:var(--muted);border-radius:4px;cursor:pointer" onclick="promptUpdateMktIntel()">+ Update</button></div>
+        <div class="info-card">
+          <div class="info-row"><span class="info-key">North — RLG</span><span class="info-val" id="mi-north">₹362/kg <span class="stale-tag">3d ago</span></span></div>
+          <div class="info-row"><span class="info-key">South — Elima</span><span class="info-val" id="mi-south">₹341/kg</span></div>
+          <div class="info-row"><span class="info-key">West — Mangalam</span><span class="info-val" id="mi-west">₹355/kg</span></div>
+          <div class="info-row" style="margin-top:4px"><span class="info-key" style="font-size:10px">All normalised to today's LME Cu</span><span class="info-val" style="font-size:10px" id="mi-lme-note">$9,847/MT</span></div>
+        </div>
+      </div>
+      <div>
+        <div class="panel-header"><span class="panel-title">Audit log</span></div>
+        <div class="audit-strip" id="audit-log">
+          <div class="audit-row"><span class="ts">—</span><span class="action" style="color:var(--muted)">No decisions recorded yet this session</span><span class="usr">—</span></div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+// ─── DATA ───────────────────────────────────────────────
+const BOARDS = [
+  { id:'router',    name:'Router board',     ebitda:0.15, cu:{lo:15.2,av:18.4,hi:22.1}, au:{lo:98,av:142,hi:198},  ag:{lo:1200,av:1840,hi:2600}, pt:{lo:8,av:14,hi:22},   pd:{lo:12,av:18,hi:28}, mkt:362, mktDaysAgo:3 },
+  { id:'server',    name:'Server board',     ebitda:0.10, cu:{lo:19.1,av:22.1,hi:26.8}, au:{lo:148,av:198,hi:268}, ag:{lo:1680,av:2100,hi:2900}, pt:{lo:12,av:20,hi:32},  pd:{lo:16,av:24,hi:38}, mkt:410, mktDaysAgo:1 },
+  { id:'mobile',    name:'Mobile board',     ebitda:0.10, cu:{lo:9.8,av:12.6,hi:15.4},  au:{lo:58,av:88,hi:126},   ag:{lo:720,av:980,hi:1380},   pt:{lo:4,av:8,hi:14},    pd:{lo:6,av:10,hi:18},  mkt:280, mktDaysAgo:5 },
+  { id:'industrial',name:'Industrial PCB',   ebitda:0.10, cu:{lo:13.4,av:16.8,hi:20.2}, au:{lo:72,av:110,hi:158},  ag:{lo:1100,av:1540,hi:2100}, pt:{lo:6,av:10,hi:16},   pd:{lo:8,av:14,hi:22},  mkt:330, mktDaysAgo:2 },
+  { id:'mixed',     name:'Mixed low-grade',  ebitda:0.10, cu:{lo:6.8,av:9.2,hi:12.1},   au:{lo:28,av:42,hi:62},    ag:{lo:420,av:620,hi:920},    pt:{lo:2,av:4,hi:8},     pd:{lo:3,av:6,hi:10},   mkt:210, mktDaysAgo:9 },
+];
+
+const ZONES = [
+  { name:'North', vendor:'RLG',      hist_lme:10800, hist_price:355, default_q:340 },
+  { name:'South', vendor:'Elima',    hist_lme:10200, hist_price:320, default_q:362 },
+  { name:'West',  vendor:'Mangalam', hist_lme:11100, hist_price:360, default_q:370 },
+];
+
+const RECOVERY = { cu:0.989, au:0.989, ag:0.934, pt:0.85, pd:0.85 };
+const RC       = { cu:0.33, au:0.125/1000, ag:0.003, pt:0.47/1000, pd:0.47/1000 }; // $/g or $/kg
+const TROY     = 31.1034768;
+const OP_COST_USD = 65;
+const WC_DAYS  = 60;
+const WC_RATE  = 0.08;
+const COMMISSION = 0.04;
+const PREMIUM  = { cu:0.04, au:0.06, ag:0.06, pt:0, pd:0 };
+
+let LME = { cu:9847, au:3241, ag:32.4, pt:980, pd:1050, rbi:83.42, tc:330 };
+let quotes = {};
+ZONES.forEach(z => quotes[z.name] = z.default_q);
+let currentBoard = BOARDS[0];
+let auditLog = [];
+
+// ─── INIT ──────────────────────────────────────────────
+document.addEventListener('DOMContentLoaded', () => {
+  const today = new Date().toISOString().split('T')[0];
+  document.getElementById('inp-date').value = today;
+  document.getElementById('disp-date').textContent = new Date().toLocaleDateString('en-IN',{day:'2-digit',month:'short',year:'numeric'});
+  buildBoardList();
+  selectBoard(BOARDS[0]);
+});
+
+function buildBoardList() {
+  const el = document.getElementById('board-list');
+  el.innerHTML = BOARDS.map(b => `
+    <button class="board-btn ${b.id===currentBoard.id?'active':''}" onclick="selectBoard(BOARDS.find(x=>x.id==='${b.id}'))">
+      <div>${b.name}</div>
+      <div class="board-meta">Target EBITDA ${(b.ebitda*100).toFixed(0)}%</div>
+    </button>
+  `).join('');
+}
+
+function selectBoard(b) {
+  currentBoard = b;
+  buildBoardList();
+  recalcAll();
+}
+
+// ─── PRICING ENGINE ────────────────────────────────────
+function metalPriceINR(metal) {
+  // returns ₹ per gram for all metals, ₹ per kg for Cu
+  const r = LME.rbi;
+  if (metal==='cu') return LME.cu * r / 1000;           // ₹/kg
+  if (metal==='au') return (LME.au / TROY) * r;         // ₹/g
+  if (metal==='ag') return (LME.ag / TROY) * r;         // ₹/g
+  if (metal==='pt') return (LME.pt / TROY) * r;         // ₹/g
+  if (metal==='pd') return (LME.pd / TROY) * r;         // ₹/g
+  return 0;
+}
+
+function calcCBP(scenario) {
+  const b = currentBoard;
+  const cu_pct = b.cu[scenario] / 100;
+  const au_ppm = b.au[scenario];
+  const ag_ppm = b.ag[scenario];
+  const pt_ppm = b.pt[scenario];
+  const pd_ppm = b.pd[scenario];
+
+  // content in grams per kg of scrap (ppm = g/tonne = mg/kg → /1000 = g/kg)
+  const cu_kg  = cu_pct;        // kg Cu per kg scrap
+  const au_g   = au_ppm / 1000; // g Au per kg scrap
+  const ag_g   = ag_ppm / 1000;
+  const pt_g   = pt_ppm / 1000;
+  const pd_g   = pd_ppm / 1000;
+
+  // recovered
+  const cu_rec = cu_kg * RECOVERY.cu;
+  const au_rec = au_g  * RECOVERY.au;
+  const ag_rec = ag_g  * RECOVERY.ag;
+  const pt_rec = pt_g  * RECOVERY.pt;
+  const pd_rec = pd_g  * RECOVERY.pd;
+
+  // revenue ₹ per kg scrap with premium
+  const p = metalPriceINR;
+  const rev =
+    cu_rec * p('cu') * (1 + PREMIUM.cu) +
+    au_rec * p('au') * (1 + PREMIUM.au) +
+    ag_rec * p('ag') * (1 + PREMIUM.ag) +
+    pt_rec * p('pt') +
+    pd_rec * p('pd');
+
+  // costs ₹ per kg scrap
+  const op_cost_inr = (OP_COST_USD / 1000) * LME.rbi; // $65/tonne → ₹/kg
+
+  // content based price
+  const cbp_pre_comm = (rev * (1 - b.ebitda) - op_cost_inr) * (1 - WC_DAYS * WC_RATE / 365);
+  const cbp = cbp_pre_comm; // landed (include commission in floor check)
+  return Math.round(cbp);
+}
+
+function normalisedZonePrice(zone) {
+  return Math.round(zone.hist_price * (LME.cu / zone.hist_lme));
+}
+
+function zoneDecision(quoted, cbp, mktIntel, histNorm) {
+  const floor = Math.min(mktIntel, histNorm);
+  if (quoted <= floor) {
+    const margin = ((cbp - quoted) / cbp * 100).toFixed(1);
+    return { type:'accept', label:'Strong accept', cls:'accept', margin };
+  }
+  if (quoted <= cbp) {
+    const margin = ((cbp - quoted) / cbp * 100).toFixed(1);
+    return { type:'conditional', label:'Conditional', cls:'conditional', margin };
+  }
+  const counter = Math.round(mktIntel * 0.97);
+  return { type:'reject', label:'Reject', cls:'reject', counter, margin: null };
+}
+
+function recalcAll() {
+  const b = currentBoard;
+  const cbp_lo = calcCBP('lo');
+  const cbp_av = calcCBP('av');
+  const cbp_hi = calcCBP('hi');
+
+  // update header metrics
+  document.getElementById('board-name-display').textContent = b.name;
+  document.getElementById('m-cbp').textContent = `₹${cbp_av}/kg`;
+  document.getElementById('m-cu').textContent = `${b.cu.av}%`;
+  document.getElementById('m-metals').textContent = `Au ${b.au.av} ppm · Ag ${b.ag.av} ppm`;
+  document.getElementById('m-ebitda').textContent = `${(b.ebitda*100).toFixed(0)}%`;
+  document.getElementById('m-mkt').textContent = `₹${b.mkt}/kg`;
+  document.getElementById('m-mkt-age').textContent = `Competitive floor · ${b.mktDaysAgo} day${b.mktDaysAgo!==1?'s':''} ago`;
+  document.getElementById('mi-lme-note').textContent = `$${LME.cu.toLocaleString()}/MT`;
+
+  // scenarios
+  document.getElementById('sc-lo-cu').textContent = `${b.cu.lo}%`;
+  document.getElementById('sc-lo-au').textContent = `${b.au.lo} ppm`;
+  document.getElementById('sc-lo-cbp').textContent = `₹${cbp_lo}/kg`;
+  document.getElementById('sc-av-cu').textContent = `${b.cu.av}%`;
+  document.getElementById('sc-av-au').textContent = `${b.au.av} ppm`;
+  document.getElementById('sc-av-cbp').textContent = `₹${cbp_av}/kg`;
+  document.getElementById('sc-hi-cu').textContent = `${b.cu.hi}%`;
+  document.getElementById('sc-hi-au').textContent = `${b.au.hi} ppm`;
+  document.getElementById('sc-hi-cbp').textContent = `₹${cbp_hi}/kg`;
+
+  // staleness
+  const anyStale = b.mktDaysAgo > 7 || BOARDS.some(x => x.mktDaysAgo > 7);
+  document.getElementById('stale-banner').classList.toggle('show', anyStale);
+
+  // zone table
+  const tbody = document.getElementById('zone-tbody');
+  const decisions = ZONES.map(z => {
+    const q   = quotes[z.name] || 0;
+    const norm = normalisedZonePrice(z);
+    return { zone:z, q, norm, d: zoneDecision(q, cbp_av, b.mkt, norm) };
+  });
+
+  // best zone = lowest price among non-rejected
+  const accepted = decisions.filter(x => x.d.type !== 'reject');
+  const bestZone = accepted.length ? accepted.reduce((a,b) => a.q < b.q ? a : b) : null;
+
+  tbody.innerHTML = decisions.map(({ zone:z, q, norm, d }) => {
+    const isBest = bestZone && bestZone.zone.name === z.name;
+    const counterRow = d.type==='reject' ? `<div class="counter-hint">Counter: ₹${d.counter}/kg</div>` : '';
+    const marginHtml = d.margin !== null
+      ? `<span class="margin-val pos">${d.margin}%</span>`
+      : `<span class="margin-val neg">—</span>`;
+    return `<tr>
+      <td class="zone-name-cell">
+        <div class="zn">${z.name}${isBest ? '<span class="best-tag">BEST ZONE</span>' : ''}</div>
+        <div class="vendor">${z.vendor}</div>
+      </td>
+      <td>
+        <input class="price-input" type="number" value="${q}" step="1"
+          onchange="onQuoteChange('${z.name}', +this.value)"
+          oninput="onQuoteChange('${z.name}', +this.value)"/>
+      </td>
+      <td><span class="hist-price">₹${norm}/kg</span></td>
+      <td><span class="hist-price">₹${b.mkt}/kg</span></td>
+      <td>
+        <span class="badge ${d.cls}">${d.label}</span>
+        ${counterRow}
+      </td>
+      <td>${marginHtml}</td>
+    </tr>`;
+  }).join('');
+}
+
+function onQuoteChange(zoneName, val) {
+  quotes[zoneName] = val;
+  recalcAll();
+  addAudit(`${zoneName} zone quote updated to ₹${val}/kg — ${currentBoard.name}`, 'pricing.user');
+}
+
+// ─── LME UPDATE ───────────────────────────────────────
+function updateLME() {
+  LME.cu  = +document.getElementById('inp-cu').value;
+  LME.au  = +document.getElementById('inp-au').value;
+  LME.ag  = +document.getElementById('inp-ag').value;
+  LME.pt  = +document.getElementById('inp-pt').value;
+  LME.pd  = +document.getElementById('inp-pd').value;
+  LME.rbi = +document.getElementById('inp-rbi').value;
+  LME.tc  = +document.getElementById('inp-tc').value;
+  const dt = document.getElementById('inp-date').value;
+
+  document.getElementById('disp-cu').textContent = `$${LME.cu.toLocaleString()}`;
+  document.getElementById('disp-au').textContent = `$${LME.au.toLocaleString()}`;
+  document.getElementById('disp-ag').textContent = `$${LME.ag}`;
+  document.getElementById('disp-pt').textContent = `$${LME.pt.toLocaleString()}`;
+  document.getElementById('disp-pd').textContent = `$${LME.pd.toLocaleString()}`;
+  document.getElementById('disp-rbi').textContent = `₹${LME.rbi}`;
+  document.getElementById('mi-lme-note').textContent = `$${LME.cu.toLocaleString()}/MT`;
+  if (dt) document.getElementById('disp-date').textContent = new Date(dt+'T00:00:00').toLocaleDateString('en-IN',{day:'2-digit',month:'short',year:'numeric'});
+
+  addAudit(`LME updated: Cu $${LME.cu} · Au $${LME.au} · RBI ₹${LME.rbi}`, 'pricing.user');
+  recalcAll();
+}
+
+// ─── MARKET INTEL UPDATE ──────────────────────────────
+function promptUpdateMktIntel() {
+  const north = prompt('North zone market intel price (₹/kg):', currentBoard.mkt);
+  if (north !== null) {
+    currentBoard.mkt = +north;
+    currentBoard.mktDaysAgo = 0;
+    document.getElementById('mi-north').innerHTML = `₹${north}/kg`;
+    addAudit(`Market intel updated — ${currentBoard.name} North: ₹${north}/kg`, 'pricing.user');
+    recalcAll();
+  }
+}
+
+// ─── AUDIT LOG ────────────────────────────────────────
+function addAudit(action, user) {
+  const now = new Date();
+  const ts = now.toLocaleTimeString('en-IN', {hour:'2-digit',minute:'2-digit',second:'2-digit'});
+  auditLog.unshift({ ts, action, user });
+  if (auditLog.length > 6) auditLog.pop();
+  const el = document.getElementById('audit-log');
+  el.innerHTML = auditLog.map(e => `
+    <div class="audit-row">
+      <span class="ts">${e.ts}</span>
+      <span class="action">${e.action}</span>
+      <span class="usr">${e.user}</span>
+    </div>
+  `).join('');
+}
+</script>
+</body>
+</html>
